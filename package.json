@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/jkup/markdown-parser/issues"
   },
-  "homepage": "https://github.com/jkup/markdown-parser#readme"
+  "homepage": "https://github.com/jkup/markdown-parser#readme",
+  "dependencies": {
+    "typescript": "^5.0.3"
+  }
 }
