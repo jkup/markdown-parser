@@ -23,11 +23,12 @@ export default class SimpleMarkdownParser {
     let buffer = "";
     let linkText = "";
     let linkHref = "";
+    let isListItem = false; // Add this line
 
     const flushBuffer = () => {
       switch (state) {
         case State.HEADER:
-          const level = buffer.length;
+          const level = buffer.length + 1;
           this.output += `<h${level}>`;
           state = State.TEXT;
           break;
@@ -52,11 +53,11 @@ export default class SimpleMarkdownParser {
     const closeTag = () => {
       switch (state) {
         case State.HEADER:
-          const level = buffer.length;
-          this.output += `</h${level}>`;
+          const level = buffer.length + 1;
+          this.output += `</h${level}>\n`;
           break;
         case State.LIST_ITEM:
-          this.output += "</li>";
+          this.output += "</li>\n";
           break;
         case State.BOLD:
           this.output += "</strong>";
@@ -68,6 +69,11 @@ export default class SimpleMarkdownParser {
     };
 
     for (const line of lines) {
+      if (isListItem) {
+        // Replace this line
+        this.output += "<ul>";
+      }
+
       let i = 0;
       while (i < line.length) {
         const char = line[i];
@@ -141,9 +147,14 @@ export default class SimpleMarkdownParser {
 
       // Process end of line
       if (state === State.HEADER || state === State.LIST_ITEM) {
+        const prevState = state;
         closeTag();
-        this.output += "\n";
         state = State.TEXT;
+        if (prevState === State.LIST_ITEM) {
+          isListItem = true;
+        } else {
+          isListItem = false;
+        }
       } else if (
         state !== State.BOLD &&
         state !== State.ITALIC &&
@@ -151,6 +162,29 @@ export default class SimpleMarkdownParser {
       ) {
         this.output += "\n";
       }
+
+      if (isListItem) {
+        this.output += "</ul>\n";
+        isListItem = false;
+      }
+    }
+
+    // Wrap paragraphs in <p> tags and trim
+    const wrappedOutput = this.output
+      .trim()
+      .split("\n\n")
+      .map((paragraph) => {
+        if (paragraph.startsWith("<h") || paragraph.startsWith("<ul>")) {
+          return paragraph.trim();
+        } else {
+          return `<p>${paragraph.trim()}</p>`;
+        }
+      })
+      .join("\n\n");
+    this.output = wrappedOutput;
+
+    if (input.trim() === "") {
+      this.output = "";
     }
 
     // Close any unclosed tags at the end of the input
@@ -162,6 +196,6 @@ export default class SimpleMarkdownParser {
       closeTag();
     }
 
-    return this.output.trim();
+    return this.output;
   }
 }

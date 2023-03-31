@@ -27,7 +27,9 @@ describe("SimpleMarkdownParser", () => {
 
   test("should parse paragraphs", () => {
     const input = "Paragraph 1\n\nParagraph 2";
-    const expectedOutput = "<p>Paragraph 1</p><p>Paragraph 2</p>";
+    const expectedOutput = `<p>Paragraph 1</p>
+
+<p>Paragraph 2</p>`;
     expect(parser.parse(input)).toBe(expectedOutput);
   });
 
