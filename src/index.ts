@@ -1,4 +1,4 @@
-class SimpleMarkdownParser {
+export default class SimpleMarkdownParser {
   parse(markdown: string): string {
     return this.parseLines(markdown.split("\n")).join("");
   }
