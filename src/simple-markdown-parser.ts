@@ -23,14 +23,14 @@ export default class SimpleMarkdownParser {
     let buffer = "";
     let linkText = "";
     let linkHref = "";
-    let isListItem = false; // Add this line
+    let isListItem = false;
+    let headerLevel = 0;
 
     const flushBuffer = () => {
       switch (state) {
         case State.HEADER:
-          const level = buffer.length + 1;
-          this.output += `<h${level}>`;
-          state = State.TEXT;
+          headerLevel = buffer.length + 1;
+          this.output += `<h${headerLevel}>`;
           break;
         case State.LIST_ITEM:
           this.output += "<li>";
@@ -48,13 +48,18 @@ export default class SimpleMarkdownParser {
           break;
       }
       buffer = "";
+
+      // Close the header tag when changing the state to State.TEXT
+      if (state === State.TEXT && headerLevel > 0) {
+        this.output += `</h${headerLevel}>\n`;
+        headerLevel = 0;
+      }
     };
 
     const closeTag = () => {
       switch (state) {
         case State.HEADER:
-          const level = buffer.length + 1;
-          this.output += `</h${level}>\n`;
+          this.output += `</h${headerLevel}>\n`;
           break;
         case State.LIST_ITEM:
           this.output += "</li>\n";
@@ -87,10 +92,12 @@ export default class SimpleMarkdownParser {
             state = State.LIST_ITEM;
           } else if (char === "*" && line[i + 1] === "*") {
             flushBuffer();
+            this.output += "<strong>";
             state = State.BOLD;
             i++;
           } else if (char === "*" && line[i + 1] !== "*") {
             flushBuffer();
+            this.output += "<em>";
             state = State.ITALIC;
           } else if (char === "[") {
             flushBuffer();
@@ -147,14 +154,8 @@ export default class SimpleMarkdownParser {
 
       // Process end of line
       if (state === State.HEADER || state === State.LIST_ITEM) {
-        const prevState = state;
         closeTag();
         state = State.TEXT;
-        if (prevState === State.LIST_ITEM) {
-          isListItem = true;
-        } else {
-          isListItem = false;
-        }
       } else if (
         state !== State.BOLD &&
         state !== State.ITALIC &&
